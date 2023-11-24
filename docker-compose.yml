@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  web-app:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    container_name: app-FormMatch
+    command: poetry run uvicorn main:app --proxy-headers --host 0.0.0.0 --port 8000
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
+  test-app:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    container_name: test-app-FormMatch
+    command: ./entrypoint.sh
+    depends_on:
+      - web-app
+    env_file:
+      - .env
+
+  mongo:
+    image: mongo
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
